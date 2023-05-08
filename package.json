@@ -1,0 +1,15 @@
+{
+  "name": "avs-backend",
+  "version": "1.0.0",
+  "description": "Backend for Anand Vaccination System",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@anandpothraj:anandpothraj/avs-backend.git"
+  },
+  "author": "Anand Pothraj",
+  "license": "ISC"
+}
