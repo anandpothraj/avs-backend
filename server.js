@@ -1,5 +1,7 @@
+const connectDB = require('./config/db');
 var bodyParser = require("body-parser");
 const express = require("express");
+const config = require("config");
 const cors = require("cors");
 const app = express();
 
@@ -42,7 +44,9 @@ app.use(
 
 app.use(express.json());
 
-const port = process.env.PORT || 6678;
+connectDB();
+
+const port = config.get("PORT");
 
 app.get("/", (req, res) => {
   res.status(200).send("Hello server is running").end();

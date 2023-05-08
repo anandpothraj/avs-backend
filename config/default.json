@@ -1,0 +1,9 @@
+{
+    "MONGO_URI": "mongodb+srv://anand:anandpothraj@cluster0.c7hwk.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
+    "PORT" : 6678,
+    "jwtSecret": "anand_pothraj",
+    "nodemailer": {
+      "username": "anandpothraj11052001@gmail.com",
+      "password": "eiegizleowbnffzb"
+    }
+}
