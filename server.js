@@ -5,6 +5,8 @@ const config = require("config");
 const cors = require("cors");
 const app = express();
 
+connectDB();
+
 //this code provide memory for save user images in database
 app.use(bodyParser.json({ limit: "7mb" }));
 app.use(bodyParser.urlencoded({ limit: "7mb", extended: true, parameterLimit: 7000 }));
@@ -43,8 +45,7 @@ app.use(
 );
 
 app.use(express.json());
-
-connectDB();
+app.use("/api/users" , require("./api/users"));
 
 const port = config.get("PORT") || 6678;
 
