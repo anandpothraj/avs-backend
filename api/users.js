@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../models/userModel");
-const { isFieldPresentInRequest } = require("../utils/helper");
+const User = require('../models/userModel');
+const { isFieldPresentInRequest } = require('../utils/helper');
 
 // @route POST /api/users/login/first
 // @desc This route is used to complete the first stage login
@@ -50,7 +50,8 @@ router.post("/login/first", (req, res)  => {
                     "There was some problem processing the request. Please try again later.",
                 });
             });
-    } catch (e) {
+    } 
+    catch (e) {
         console.log(`Error while login user: ${e}`);
         return res.status(500).json({
         message:
@@ -58,3 +59,5 @@ router.post("/login/first", (req, res)  => {
         });
     }
 });
+
+module.exports = router;
