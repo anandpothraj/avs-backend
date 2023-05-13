@@ -20,12 +20,10 @@ const userSchema = mongoose.Schema(
         },
         password:{
             type:String,
-            min:[6,"Passwords should have atleast 6 characters"],
             required:true,
         },
         secretCode:{
             type:Number,
-            min:[4,"Passwords should have atleast 6 characters"],
             required:true,
         },
         phone:{
@@ -68,11 +66,10 @@ userSchema.pre('save', async function(next){
     if(!this.isModified('password')){
         next();
     }
-
     const salt = await bcrpyt.genSalt(10);
     this.password = await bcrpyt.hash(this.password, salt)
 })
 
 const User = mongoose.model("User", userSchema);
 
-module.exports = User;
+module.exports = User;    
