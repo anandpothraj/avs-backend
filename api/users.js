@@ -31,8 +31,8 @@ router.post("/register/checkaadhaar", async (req, res) => {
         const aadhaarExists = await User.findOne({ aadhaar });
 
         if(aadhaarExists){
-            res.status(403).json({
-                message:"Aadhaar Already exist",
+            res.status(200).json({
+                accountType:user.accountType
             })
         }
         else{
