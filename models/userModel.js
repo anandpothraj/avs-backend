@@ -7,6 +7,7 @@ const userSchema = mongoose.Schema(
             type:String,
             required:true,
             trim:true,
+            unique:true,
         },
         name: {
             type:String,
@@ -50,7 +51,6 @@ const userSchema = mongoose.Schema(
             type:Number,
             required:true,
             trim:true,
-            unique:true, 
         }
     },
     {
