@@ -1,3 +1,4 @@
+const userRoutes = require("./routes/userRoutes");
 const connectDB = require('./config/db');
 var bodyParser = require("body-parser");
 const express = require("express");
@@ -45,7 +46,7 @@ app.use(
 );
 
 app.use(express.json());
-app.use("/api/users" , require("./api/users"));
+app.use("/api/users" , userRoutes);
 
 const port = config.get("PORT") || 6678;
 

@@ -1,9 +1,8 @@
 const config = require("config");
 const jwt = require("jsonwebtoken");
 
-function auth(req, res, next) {
+const auth = (req, res, next) => {
   const token = req.header(`token`);
-  console.log(req.header(`token`));
 
   // Check for token
   if (!token) {
@@ -19,7 +18,8 @@ function auth(req, res, next) {
     // Add user from payload
     req.user = decoded;
     next();
-  } catch (error) {
+  } 
+  catch (error) {
     res.status(400).json({
       message: "Token invalid.",
     });
