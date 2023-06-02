@@ -1,63 +1,111 @@
-const express = require("express");
-const router = express.Router();
 const User = require('../models/userModel');
+const generateToken = require('../utils/generateToken');
 const { isFieldPresentInRequest } = require('../utils/helper');
 
-// @route POST /api/users/login/first
-// @desc This route is used to complete the first stage login
-// @payload ("aadhaar","password")
+// @route POST /api/users/register/checkuser
+// @desc This route is used to check if the user already exists for same aadhaar number and accountType
+// @payload ("aadhaar","accountType")
 // @response  (token, user, message)
 // @access Public
-router.post("/login/first", (req, res)  => {
+const checkUser = async (req, res) => {
     try {
         let reqBody = req.body;
-        let requiredFields = ["aadhaar", "password"];
+        let requiredFields = ["aadhaar", "accountType"];
         let invalidFields = [];
+
         requiredFields.forEach((field) => {
             if (!isFieldPresentInRequest(reqBody, field)) {
                 invalidFields.push(field);
             }
         });
+
         if (invalidFields.length > 0) {
             return res.status(400).json({
                 message: `Error - Missing fields: ${invalidFields.join(", ")}`,
             });
         }
-        const { aadhaar, password } = reqBody;
-        User.findOne({ aadhaar })
-            .then((user) => {
-            if (!user) {
-                return res.status(400).json({
-                message: "User does not exist.",
-                });
-            }
-            else{
-                if(user && ( user.matchPassword(password))){
-                    res.json({msg:"Correct Aadhaar number and password"});
-                }
-                else{
-                    res.status(400);
-                    res.json({
-                        msg:"Invalid Credentials",
-                    })
-                }
-            }
-            })
-            .catch((error) => {
-                console.log(`Error while login user: ${error}`);
-                return res.status(500).json({
-                    message:
-                    "There was some problem processing the request. Please try again later.",
-                });
+
+        const { aadhaar, accountType } = reqBody;
+
+        const userExists = await User.findOne({ aadhaar, accountType });
+
+        if (userExists) {
+            return res.status(409).json({
+                message: "User already exists",
             });
+        }
+        else{
+            return res.status(200).json({
+                message:"New user",
+            })
+        }
     } 
-    catch (e) {
-        console.log(`Error while login user: ${e}`);
+    catch (error) {
+        console.log(`Error while registering user: ${error}`);
         return res.status(500).json({
-        message:
-            "There was some problem processing the request. Please try again later.",
+            message: "There was some problem processing the request. Please try again later.",
         });
     }
-});
+}
 
-module.exports = router;
+// @route POST /api/users/register/createuser
+// @desc This route is used to create a new user
+// @payload ("accountType", "aadhaar", "name", "email", "password", "secretCode", "phone", "age", "dob", "gender")
+// @response  (token, user, message)
+// @access Public
+
+const createUser = async (req, res) => {
+    try {
+        let reqBody = req.body;
+        let requiredFields = ["accountType", "aadhaar", "name", "email", "password", "secretCode", "phone", "age", "dob", "gender"];
+        let invalidFields = [];
+
+        requiredFields.forEach((field) => {
+            if (!isFieldPresentInRequest(reqBody, field)) {
+                invalidFields.push(field);
+            }
+        });
+
+        if (invalidFields.length > 0) {
+            return res.status(400).json({
+                message: `Error - Missing fields: ${invalidFields.join(", ")}`,
+            });
+        }
+
+        const { accountType, aadhaar, name, email, password, secretCode, phone, age, dob, gender } = reqBody;
+
+        const user = await User.create({
+            accountType, name, email, password,secretCode, phone, age, dob, gender, aadhaar
+        });
+
+        if(user){
+            if(user) {
+                res.status(201).json({
+                    _id:user._id,
+                    accountType:user.accountType,
+                    name:user.name,
+                    aadhaar:user.aadhaar,
+                    email:user.email,
+                    phone:user.phone,
+                    age:user.age,
+                    dob:user.dob,
+                    gender:user.gender,
+                    token:generateToken(user._id),
+                })
+            }
+            else{
+                res.status(500).json({
+                    msg:"Error Occured During Register",
+                })
+            }
+        }
+    } 
+    catch (error) {
+        console.log(`Error while registering user: ${error}`);
+        return res.status(500).json({
+            message: "There was some problem processing the request. Please try again later.",
+        });
+    }
+}
+
+module.exports = { checkUser, createUser };
