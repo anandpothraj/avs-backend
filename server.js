@@ -13,7 +13,7 @@ app.use(bodyParser.json({ limit: "7mb" }));
 app.use(bodyParser.urlencoded({ limit: "7mb", extended: true, parameterLimit: 7000 }));
 
 // list of allowed origins that currently contains URLs and Regexp entries
-var allowedOrigins = [config.get("FRONTENT_DEV"), config.get("FRONTENT_LOCAL")];
+var allowedOrigins = [config.get("FRONTEND_PRODUCTION"), config.get("FRONTEND_DEVELOPMENT"), config.get("FRONTEND_LOCAL")];
 
 app.use(
   cors({
