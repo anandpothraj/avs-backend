@@ -1,7 +1,8 @@
 {
   "MONGO_URI": "mongodb+srv://anand:anandpothraj@cluster0.c7hwk.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
   "PORT" : 6678,
-  "FRONTENT_DEV" : "http://localhost:3000",
+  "FRONTENT_PRODUCTION" : "https://anand-vaccination-system.netlify.app",
+  "FRONTENT_DEVELOPMENT" : "https://dev-anand-vaccination-system.netlify.app",
   "FRONTENT_LOCAL" : "http://localhost:3000",
   "jwtSecret": "anand_pothraj",
   "nodemailer": {
