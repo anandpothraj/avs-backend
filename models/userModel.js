@@ -70,9 +70,6 @@ userSchema.pre('save', async function (next) {
     this.password = await bcrypt.hash(this.password, salt);
     next();
 });
-  
-// Create a compound index on 'aadhaar' and 'accountType' fields
-userSchema.index({ aadhaar: 1, accountType: 1 }, { unique: true });
 
 const User = mongoose.model("User", userSchema);
-module.exports = User;   
+module.exports = User;
