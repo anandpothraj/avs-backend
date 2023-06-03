@@ -173,7 +173,6 @@ const authSecretCode = async (req, res) => {
         const userExists = await User.findOne({ aadhaar, accountType });
         if (userExists) {
             if(userExists && userExists.secretCode == secretCode){
-                console.log(userExists.secretCode);
                 res.status(200).json({message:"Correct Secret code"});
             }
             else{
