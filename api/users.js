@@ -170,10 +170,21 @@ const authSecretCode = async (req, res) => {
 
         const { accountType, aadhaar, secretCode } = reqBody;
 
-        const userExists = await User.findOne({ aadhaar, accountType });
-        if (userExists) {
-            if(userExists && userExists.secretCode == secretCode){
-                res.status(200).json({message:"Correct Secret code"});
+        const user = await User.findOne({ aadhaar, accountType });
+        if (user) {
+            if(user && user.secretCode == secretCode){
+                res.status(200).json({
+                    _id:user._id,
+                    accountType:user.accountType,
+                    name:user.name,
+                    email:user.email,
+                    phone:user.phone,
+                    age:user.age,
+                    dob:user.dob,
+                    gender:user.gender,
+                    aadhaar:user.aadhaar,
+                    token:generateToken(user._id),
+                });
             }
             else{
                 res.status(400);
