@@ -36,10 +36,10 @@ app.use(
       }
 
       // if origin is not allowed
-      var msg =
+      var message =
         "The CORS policy for this site does not " +
         "allow access from the specified Origin.";
-      return callback(new Error(msg), false);
+      return callback(new Error(message), false);
     },
     credentials: true,
   })
