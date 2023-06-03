@@ -1,6 +1,3 @@
-const express = require("express");
-const router = express.Router();
-
 function isFieldPresentInRequest(reqBody, fieldName) {
   try {
     return (
