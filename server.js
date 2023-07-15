@@ -1,6 +1,7 @@
+const doctorRoutes = require("./routes/doctorRoutes");
 const userRoutes = require("./routes/userRoutes");
 const connectDB = require('./config/db');
-var bodyParser = require("body-parser");
+const bodyParser = require("body-parser");
 const express = require("express");
 const config = require("config");
 const cors = require("cors");
@@ -47,6 +48,7 @@ app.use(
 
 app.use(express.json());
 app.use("/api/users" , userRoutes);
+app.use("/api/doctors" , doctorRoutes);
 
 const port = config.get("PORT") || 6678;
 
