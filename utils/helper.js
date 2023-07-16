@@ -1,4 +1,4 @@
-function isFieldPresentInRequest(reqBody, fieldName) {
+const isFieldPresentInRequest = (reqBody, fieldName) => {
   try {
     return (
       reqBody.hasOwnProperty(fieldName) &&
@@ -12,6 +12,4 @@ function isFieldPresentInRequest(reqBody, fieldName) {
   }
 }
 
-module.exports = {
-  isFieldPresentInRequest,
-};
+module.exports = { isFieldPresentInRequest };
