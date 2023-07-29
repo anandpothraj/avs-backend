@@ -13,7 +13,6 @@ const VaccineSchema = mongoose.Schema(
         },
         timeGap: {
             type:String,
-            required:true
         },
         minAge: {
             type: Number,
