@@ -1,4 +1,4 @@
-const Vaccine = require('../models/vaccineModal');
+const Vaccine = require('../models/vaccineModel');
 const { isFieldPresentInRequest } = require('../utils/helper');
 
 // @route GET /api/doctor/fetch/vaccines
@@ -32,10 +32,10 @@ const fetchVaccines = async (req, res) => {
 const addVaccine = async (req, res) => {
     try {
         let reqBody = req.body;
+        let requiredFields = ["vaccineName", "noOfDose", "minAge", "addedBy", "addedOn"];
         if(reqBody.noOfDose > 1){
             requiredFields.push("timeGap");
         }
-        let requiredFields = ["vaccineName", "noOfDose", "minAge", "addedBy", "addedOn"];
         const invalidFields = requiredFields.filter((field) => !isFieldPresentInRequest(reqBody, field));
         if (invalidFields.length > 0) {
             return res.status(400).json({
@@ -80,10 +80,10 @@ const addVaccine = async (req, res) => {
 const editVaccine = async (req, res) => {
     try {
         let reqBody = req.body;
+        let requiredFields = ["vaccineName", "noOfDose", "minAge", "addedBy", "addedOn"];
         if(reqBody.noOfDose > 1){
             requiredFields.push("timeGap");
         }
-        let requiredFields = ["vaccineName", "noOfDose", "minAge", "addedBy", "addedOn"];
         const invalidFields = requiredFields.filter((field) => !isFieldPresentInRequest(reqBody, field));
         if (invalidFields.length > 0) {
             return res.status(400).json({
