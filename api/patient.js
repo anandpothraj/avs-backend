@@ -64,6 +64,7 @@ const bookAppointment = async (req, res) => {
     });
   }
 };
+
 // @route GET /api/patients/fetch/appointments/:id
 // @desc This route is used to fetch all the appointments
 // @payload ( "userId" )
@@ -90,4 +91,36 @@ const fetchAppointments = async (req, res) => {
   }
 }
 
-module.exports = { bookAppointment, fetchAppointments };
+// @route DELETE /api/patients/remove/appointment/:id
+// @desc This route is used to delete an appointment
+// @response (message)
+// @access Private
+const deleteAppointment = async (req, res) => {
+  try {
+      const appointment = await Appointment.findById(req.params.id);
+      if (!appointment) {
+          return res.status(404).json({
+          message: "Appointment with this ID is not found!",
+          });
+      }
+      const deletedAppointment = await appointment.deleteOne();
+      if (deletedAppointment) {
+          return res.status(202).json({
+          message: "Appointment deleted successfully!",
+          });
+      } 
+      else {
+          return res.status(400).json({
+          message: "Error occurred while deleting appointment!",
+          });
+      }
+  } 
+  catch (error) {
+    console.error(`Error while deleting appointment: ${error}`);
+    return res.status(500).json({
+      message: "There was some problem processing the request. Please try again later.",
+    });
+  }
+};
+
+module.exports = { bookAppointment, fetchAppointments, deleteAppointment };
