@@ -128,7 +128,7 @@ const editVaccine = async (req, res) => {
     };
 };
 
-// @route DELETE /api/doctor/delete/vaccine/:id
+// @route DELETE /api/doctor/remove/vaccine/:id
 // @desc This route is used to delete a vaccine
 // @response (message)
 // @access Private

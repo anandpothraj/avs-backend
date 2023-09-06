@@ -64,5 +64,30 @@ const bookAppointment = async (req, res) => {
     });
   }
 };
+// @route GET /api/patients/fetch/appointments/:id
+// @desc This route is used to fetch all the appointments
+// @payload ( "userId" )
+// @response  ( appointments, message )
+// @access Private
+const fetchAppointments = async (req, res) => {
+  try {
+    const userId = req.params.id;
 
-module.exports = { bookAppointment };
+    // Fetch all appointments for the given user
+    const appointments = await Appointment.find({ user: userId });
+
+    if (appointments.length === 0) {
+      return res.status(200).json({
+        message: "No appointments found for the user.",
+      });
+    }
+    return res.status(200).json(appointments);
+  } catch (error) {
+    console.log(`Error while fetching appointments: ${error}`);
+    return res.status(500).json({
+      message: "There was some problem processing the request. Please try again later.",
+    });
+  }
+}
+
+module.exports = { bookAppointment, fetchAppointments };
