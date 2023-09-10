@@ -91,6 +91,68 @@ const fetchAppointments = async (req, res) => {
   }
 }
 
+// @route PUT /api/patients/edit/appointment
+// @desc This route is used to edit an appointment
+// @payload ( "id", "userId", "vaccineName", "doseNo" )
+// @response  ( appointment, message )
+// @access Private
+const editAppointment = async (req, res) => {
+  try {
+      let reqBody = req.body;
+      let requiredFields = [ "id", "userId", "vaccineName", "doseNo" ];
+      const invalidFields = requiredFields.filter((field) => !isFieldPresentInRequest(reqBody, field));
+      if (invalidFields.length > 0) {
+          return res.status(400).json({
+              message: `Error - Missing fields: ${invalidFields.join(", ")}`,
+          });
+      }
+
+      const { id, userId, vaccineName, doseNo } = reqBody;
+
+      const appointment = await Appointment.findById(id);
+      if(appointment){
+          appointment.vaccineName = vaccineName;
+          appointment.doseNo = doseNo;
+
+          const existingAppointment = await Appointment.findOne({
+            user: userId,
+            vaccineName: vaccineName,
+            doseNo: doseNo,
+          });
+          
+          if (existingAppointment) {
+            return res.status(409).json({
+              message: "An appointment with the same details already exists!",
+            });
+          }
+
+          const updatedAppointment = await appointment.save();
+
+          if(updatedAppointment){
+              res.status(200).json({
+                  message: "Appointment updated successfully!"
+              })
+          }
+          else{
+              res.status(400).json({
+                  message:"Error Occured While updating vaccine!",
+              })
+          }
+      }
+      else{
+          res.status(404).json({
+              message:"Appointment with this ID is not found!",
+          })
+      }
+  }
+  catch (error) {
+      console.log(`Error while editing appointment: ${error}`);
+      return res.status(500).json({
+          message: "There was some problem processing the request. Please try again later.",
+      });
+  };
+};
+
 // @route DELETE /api/patients/remove/appointment/:id
 // @desc This route is used to delete an appointment
 // @response (message)
@@ -123,4 +185,4 @@ const deleteAppointment = async (req, res) => {
   }
 };
 
-module.exports = { bookAppointment, fetchAppointments, deleteAppointment };
+module.exports = { bookAppointment, fetchAppointments, editAppointment, deleteAppointment };
