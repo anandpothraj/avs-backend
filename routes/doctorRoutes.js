@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { fetchVaccines, addVaccine, editVaccine, deleteVaccine } = require('../api/doctor');
+const { fetchVaccines, addVaccine, editVaccine, deleteVaccine, fetchAppointmentByAadhaar, fetchAppointmentByBookingId } = require('../api/doctor');
 
 router.route('/add/vaccine').post(addVaccine);
 router.route('/fetch/vaccines').get(fetchVaccines);
 router.route('/edit/vaccine/:id').put(editVaccine);
 router.route('/remove/vaccine/:id').delete(deleteVaccine);
+router.route('/fetch/appointments/:aadhaar').get(fetchAppointmentByAadhaar);
+router.route('/fetch/appointment/:bookingId').get(fetchAppointmentByBookingId);
 
 module.exports = router;
