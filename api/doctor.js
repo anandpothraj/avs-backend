@@ -1,4 +1,6 @@
+const User = require('../models/userModel');
 const Vaccine = require('../models/vaccineModel');
+const Appointment = require('../models/appointmentModel');
 const { isFieldPresentInRequest } = require('../utils/helper');
 
 // @route GET /api/doctor/fetch/vaccines
@@ -160,4 +162,110 @@ const deleteVaccine = async (req, res) => {
     }
 };
 
-module.exports = { fetchVaccines, addVaccine, editVaccine, deleteVaccine }; 
+// @desc This API is used to fetch the appointments and user details using Aadhaar ID.
+// @payload ( "appointment, userdetails" )
+// @response  ( { user, appointment }, message )
+// @access Private
+const fetchAppointmentByAadhaar = async (req, res) => {
+    try {
+        const aadhaar = req.params.aadhaar;
+
+        // Fetching user details using Aadhaar
+        const userDetails = await User.findOne({ aadhaar });
+
+        if (!userDetails) {
+            return res.status(404).json({
+                message: "No user found for the provided Aadhaar number.",
+            });
+        }
+
+        // Fetching appointments for the user
+        const appointments = await Appointment.find({ user: userDetails._id });
+
+        if (!appointments || appointments.length === 0) {
+            return res.status(404).json({
+                message: "No appointments found for the provided Aadhaar number.",
+            });
+        }
+
+        // Constructing the response
+        const response = {
+            user: {
+                age: userDetails.age,
+                userId: userDetails._id,
+                name: userDetails.name,
+                gender: userDetails.gender,
+                aadhaar: userDetails.aadhaar,
+            },
+            appointment: appointments.map((appointment) => ({
+                appointmentId: appointment._id,
+                doseNo: appointment.doseNo,
+                vaccineName: appointment.vaccineName,
+            })),
+        };
+
+        return res.status(200).json(response);
+    } catch (error) {
+        console.error(`Error while fetching appointments using user details: ${error}`);
+        return res.status(500).json({
+            message: "There was some problem processing the request. Please try again later.",
+        });
+    }
+};
+
+
+// @route GET /api/doctors/fetch/appointment/:bookingId
+// @desc This route is used to fetch the appointment using booking id and return user detail along with appointment detail.
+// @payload ( "bookingId" )
+// @response  ( { user, appointment }, message )
+// @access Private
+const fetchAppointmentByBookingId = async (req, res) => {
+    try {
+        const bookingId = req.params.bookingId;
+
+        // Fetch the appointment for the provided booking id.
+        const appointment = await Appointment.findById(bookingId);
+
+        if (!appointment) {
+            return res.status(404).json({
+                message: "No appointment found for the provided booking id.",
+            });
+        }
+
+        // Fetch the user details from user id.
+        const userDetails = await User.findById(appointment.user);
+
+        if (!userDetails) {
+            return res.status(404).json({
+                message: "User details not found!",
+            });
+        }
+
+        // Constructing the response
+        const response = {
+            user: {
+                age: userDetails.age,
+                userId: userDetails._id,
+                name: userDetails.name,
+                gender: userDetails.gender,
+                aadhaar: userDetails.aadhaar,
+            },
+            appointment: {
+                appointmentId: appointment._id,
+                doseNo: appointment.doseNo,
+                vaccineName: appointment.vaccineName,
+            },
+        };
+
+        return res.status(200).json(response);
+        
+    } catch (error) {
+        console.error(`Error while fetching appointment and user details: ${error}`);
+        return res.status(500).json({
+            message: "There was some problem processing the request. Please try again later.",
+        });
+    }
+};
+
+
+module.exports = { fetchVaccines, addVaccine, editVaccine, deleteVaccine, fetchAppointmentByAadhaar, fetchAppointmentByBookingId }; 
