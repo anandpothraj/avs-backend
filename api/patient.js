@@ -9,7 +9,7 @@ const { isFieldPresentInRequest } = require('../utils/helper');
 const bookAppointment = async (req, res) => {
   try {
     let reqBody = req.body;
-    let requiredFields = ["vaccineName", "doseNo", "userId"];
+    let requiredFields = ["vaccineName", "doseNo", "userId", "maxDose"];
     let invalidFields = [];
 
     requiredFields.forEach((field) => {
@@ -24,7 +24,7 @@ const bookAppointment = async (req, res) => {
       });
     }
 
-    const { userId, vaccineName, doseNo } = reqBody;
+    const { userId, vaccineName, doseNo, maxDose } = reqBody;
 
     const existingAppointment = await Appointment.findOne({
       user: userId,
@@ -41,7 +41,9 @@ const bookAppointment = async (req, res) => {
     const newAppointment = new Appointment({
         user: userId,
         doseNo: doseNo,
-        vaccineName: vaccineName,
+        status : "active",
+        maxDose : maxDose,
+        vaccineName: vaccineName
     });
 
     // Save the appointment to the database
@@ -79,10 +81,13 @@ const fetchAppointments = async (req, res) => {
 
     if (appointments.length === 0) {
       return res.status(200).json({
-        message: "No appointments found for the user.",
+        appointments : [],
+        message: "No appointments found for the user."
       });
     }
-    return res.status(200).json(appointments);
+    return res.status(200).json({
+      appointments : appointments
+    });
   } catch (error) {
     console.log(`Error while fetching appointments: ${error}`);
     return res.status(500).json({
