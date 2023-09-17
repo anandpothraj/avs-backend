@@ -16,6 +16,14 @@ const appointmentSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    maxDose : {
+      type: Number,
+      required: true,
+    },
+    status : {
+      type: String,
+      required: true
+    }
   },
   {
     timestamps: true,

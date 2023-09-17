@@ -1,5 +1,6 @@
 const User = require('../models/userModel');
 const Vaccine = require('../models/vaccineModel');
+const Vaccinate = require('../models/vaccinateModal');
 const Appointment = require('../models/appointmentModel');
 const { isFieldPresentInRequest } = require('../utils/helper');
 
@@ -192,15 +193,16 @@ const fetchAppointmentByAadhaar = async (req, res) => {
         const response = {
             user: {
                 age: userDetails.age,
-                userId: userDetails._id,
                 name: userDetails.name,
+                userId: userDetails._id,
                 gender: userDetails.gender,
-                aadhaar: userDetails.aadhaar,
+                aadhaar: userDetails.aadhaar
             },
             appointment: appointments.map((appointment) => ({
-                appointmentId: appointment._id,
                 doseNo: appointment.doseNo,
-                vaccineName: appointment.vaccineName,
+                maxDose: appointment.maxDose,
+                appointmentId: appointment._id,
+                vaccineName: appointment.vaccineName
             })),
         };
 
@@ -245,15 +247,16 @@ const fetchAppointmentByBookingId = async (req, res) => {
         const response = {
             user: {
                 age: userDetails.age,
-                userId: userDetails._id,
                 name: userDetails.name,
+                userId: userDetails._id,
                 gender: userDetails.gender,
-                aadhaar: userDetails.aadhaar,
+                aadhaar: userDetails.aadhaar
             },
             appointment: {
-                appointmentId: appointment._id,
                 doseNo: appointment.doseNo,
-                vaccineName: appointment.vaccineName,
+                maxDose: appointment.maxDose,
+                appointmentId: appointment._id,
+                vaccineName: appointment.vaccineName
             },
         };
 
@@ -267,5 +270,87 @@ const fetchAppointmentByBookingId = async (req, res) => {
     }
 };
 
+// @route POST /api/doctor/vaccinate/patient
+// @desc This route is used to vaccinate patient using user id.
+// @response (message)
+// @access Private
+const vaccinatePatient = async (req, res) => {
+    try {
+        let reqBody = req.body;
+        let requiredFields = [ "patientId", "doctorId", "vaccineName", "doseNo", "hospitalName", "pincode", "maxDose", "appointmentId" ];
+        const invalidFields = requiredFields.filter((field) => !isFieldPresentInRequest(reqBody, field));
+        if (invalidFields.length > 0) {
+            return res.status(400).json({
+                message: `Error - Missing fields: ${invalidFields.join(", ")}`,
+            });
+        }
+        
+        const { patientId, doctorId, vaccineName, doseNo, hospitalName, pincode, maxDose, appointmentId } = reqBody;
 
-module.exports = { fetchVaccines, addVaccine, editVaccine, deleteVaccine, fetchAppointmentByAadhaar, fetchAppointmentByBookingId }; 
+        const alreadyVaccinated = await Vaccinate.findOne({
+            patientId : patientId,
+            vaccineName: vaccineName,
+            doseNo: doseNo,
+        });
+      
+        if (alreadyVaccinated) {
+            return res.status(409).json({
+                message: "Patient is already vaccinated with the same vaccine and dose number!",
+            });
+        }
+      
+        const newVaccinate = new Vaccinate({
+            patientId : patientId,
+            doctorId : doctorId, 
+            vaccineName : vaccineName,
+            doseNo : doseNo, 
+            hospitalName : hospitalName, 
+            pincode : pincode,
+            fullyVaccinated : doseNo === maxDose ? true : false
+        });
+      
+        // Save the vaccination to the database
+        const vaccinate = await newVaccinate.save();
+        
+        if (vaccinate) {
+
+            const appointment = await Appointment.findById(appointmentId);
+
+            if(appointment){
+                appointment.status = "deactive";
+
+                const updatedAppointment = await appointment.save();
+                if (updatedAppointment) {
+                    res.status(201).json({
+                        vaccinate: vaccinate,
+                        message: "Patient vaccinated successfully...!",
+                    });
+                } 
+                else {
+                    return res.status(400).json({
+                    message: "Error occurred while deleting appointment!",
+                    });
+                }
+            } 
+            else {
+                res.status(400).json({
+                message: "Error Occurred During vaccinating patient",
+                });
+            }
+        }
+        else {
+            res.status(400).json({
+                message: "Error!! Patient is not vaccined, Error Occurred During vaccinating patient",
+            });
+        }
+    }
+    catch (error) {
+        console.log(`Error while vaccinating patient: ${error}`);
+        return res.status(500).json({
+            message: "There was some problem processing the request. Please try again later.",
+        });
+    };
+};
+
+
+module.exports = { fetchVaccines, addVaccine, editVaccine, deleteVaccine, fetchAppointmentByAadhaar, fetchAppointmentByBookingId, vaccinatePatient }; 
