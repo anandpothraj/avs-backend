@@ -1,3 +1,4 @@
+const Vaccinate = require('../models/vaccinateModal');
 const Appointment = require('../models/appointmentModel');
 const { isFieldPresentInRequest } = require('../utils/helper');
 
@@ -190,4 +191,33 @@ const deleteAppointment = async (req, res) => {
   }
 };
 
-module.exports = { bookAppointment, fetchAppointments, editAppointment, deleteAppointment };
+// @route GET /api/patients/fetch/vaccinations/:id
+// @desc This route is used to fetch all the vaccinations status
+// @payload ( "userId" )
+// @response  ( vaccinations, message )
+// @access Private
+const fetchVaccinations = async (req, res) => {
+  try {
+    const patientId = req.params.id;
+
+    // Fetch all vaccinations for the given user
+    const vaccinations = await Vaccinate.find({ patientId : patientId });
+
+    if (vaccinations.length === 0) {
+      return res.status(200).json({
+        vaccinations : [],
+        message: "No vaccinations found for the user."
+      });
+    }
+    return res.status(200).json({
+      vaccinations : vaccinations
+    });
+  } catch (error) {
+    console.log(`Error while fetching vaccinations: ${error}`);
+    return res.status(500).json({
+      message: "There was some problem processing the request. Please try again later.",
+    });
+  }
+}
+
+module.exports = { bookAppointment, fetchAppointments, editAppointment, deleteAppointment, fetchVaccinations };
