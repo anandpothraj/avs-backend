@@ -23,6 +23,10 @@ const appointmentSchema = new mongoose.Schema(
     status : {
       type: String,
       required: true
+    },
+    nextDose : {
+      type : String,
+      required : false
     }
   },
   {

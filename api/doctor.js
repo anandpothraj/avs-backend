@@ -200,9 +200,11 @@ const fetchAppointmentByAadhaar = async (req, res) => {
             },
             appointment: appointments.map((appointment) => ({
                 doseNo: appointment.doseNo,
+                status : appointment.status,
                 maxDose: appointment.maxDose,
                 appointmentId: appointment._id,
-                vaccineName: appointment.vaccineName
+                nextDose : appointment.nextDose,
+                vaccineName: appointment.vaccineName,
             })),
         };
 
@@ -227,6 +229,12 @@ const fetchAppointmentByBookingId = async (req, res) => {
 
         // Fetch the appointment for the provided booking id.
         const appointment = await Appointment.findById(bookingId);
+
+        if (appointment && appointment.status === "deactive") {
+            return res.status(409).json({
+                message: "Patient is already vaccinated for the provided booking id.",
+            });
+        }
 
         if (!appointment) {
             return res.status(404).json({
@@ -254,9 +262,11 @@ const fetchAppointmentByBookingId = async (req, res) => {
             },
             appointment: {
                 doseNo: appointment.doseNo,
+                status : appointment.status,
                 maxDose: appointment.maxDose,
                 appointmentId: appointment._id,
-                vaccineName: appointment.vaccineName
+                nextDose : appointment.nextDose,
+                vaccineName: appointment.vaccineName,
             },
         };
 
@@ -277,7 +287,10 @@ const fetchAppointmentByBookingId = async (req, res) => {
 const vaccinatePatient = async (req, res) => {
     try {
         let reqBody = req.body;
-        let requiredFields = [ "patientId", "doctorId", "vaccineName", "doseNo", "hospitalName", "pincode", "maxDose", "appointmentId" ];
+        let requiredFields = [ "patientId", "doctorId", "vaccineName", "doseNo", "hospitalName", "pincode", "maxDose", "appointmentId"];
+        if(parseInt(reqBody.maxDose) - parseInt(reqBody.doseNo) > 0){
+            requiredFields.push("nextDose");
+        }
         const invalidFields = requiredFields.filter((field) => !isFieldPresentInRequest(reqBody, field));
         if (invalidFields.length > 0) {
             return res.status(400).json({
@@ -285,7 +298,7 @@ const vaccinatePatient = async (req, res) => {
             });
         }
         
-        const { patientId, doctorId, vaccineName, doseNo, hospitalName, pincode, maxDose, appointmentId } = reqBody;
+        const { patientId, doctorId, vaccineName, doseNo, hospitalName, pincode, maxDose, appointmentId, nextDose } = reqBody;
 
         const alreadyVaccinated = await Vaccinate.findOne({
             patientId : patientId,
@@ -306,7 +319,9 @@ const vaccinatePatient = async (req, res) => {
             doseNo : doseNo, 
             hospitalName : hospitalName, 
             pincode : pincode,
-            fullyVaccinated : doseNo === maxDose ? true : false
+            fullyVaccinated : doseNo === maxDose ? true : false,
+            remainingNoOfDose : maxDose - doseNo,
+            nextDose : nextDose
         });
       
         // Save the vaccination to the database
