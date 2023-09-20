@@ -35,6 +35,15 @@ const vaccinateSchema = new mongoose.Schema(
             type: Boolean,
             required: true,
             trim: true,
+        },
+        remainingNoOfDose : {
+            type: Number,
+            required: true,
+            trim: true,
+        },
+        nextDose : {
+            type: String,
+            required : false
         }
     },
     {
