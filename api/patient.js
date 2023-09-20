@@ -1,3 +1,4 @@
+const User = require('../models/userModel');
 const Vaccinate = require('../models/vaccinateModal');
 const Appointment = require('../models/appointmentModel');
 const { isFieldPresentInRequest } = require('../utils/helper');
@@ -11,6 +12,9 @@ const bookAppointment = async (req, res) => {
   try {
     let reqBody = req.body;
     let requiredFields = ["vaccineName", "doseNo", "userId", "maxDose"];
+    if(parseInt(reqBody.maxDose) - parseInt(reqBody.doseNo) > 0){
+      requiredFields.push("nextDose");
+    }
     let invalidFields = [];
 
     requiredFields.forEach((field) => {
@@ -25,7 +29,7 @@ const bookAppointment = async (req, res) => {
       });
     }
 
-    const { userId, vaccineName, doseNo, maxDose } = reqBody;
+    const { userId, vaccineName, doseNo, maxDose, nextDose } = reqBody;
 
     const existingAppointment = await Appointment.findOne({
       user: userId,
@@ -44,6 +48,7 @@ const bookAppointment = async (req, res) => {
         doseNo: doseNo,
         status : "active",
         maxDose : maxDose,
+        nextDose : nextDose,
         vaccineName: vaccineName
     });
 
@@ -105,20 +110,25 @@ const fetchAppointments = async (req, res) => {
 const editAppointment = async (req, res) => {
   try {
       let reqBody = req.body;
-      let requiredFields = [ "id", "userId", "vaccineName", "doseNo" ];
+      let requiredFields = [ "id", "userId", "vaccineName", "doseNo", "maxDose" ];
+      if(parseInt(reqBody.maxDose) - parseInt(reqBody.doseNo) > 0){
+        requiredFields.push("nextDose");
+      }
       const invalidFields = requiredFields.filter((field) => !isFieldPresentInRequest(reqBody, field));
       if (invalidFields.length > 0) {
-          return res.status(400).json({
-              message: `Error - Missing fields: ${invalidFields.join(", ")}`,
-          });
+        return res.status(400).json({
+          message: `Error - Missing fields: ${invalidFields.join(", ")}`,
+        });
       }
 
-      const { id, userId, vaccineName, doseNo } = reqBody;
+      const { id, userId, vaccineName, doseNo, maxDose, nextDose } = reqBody;
 
       const appointment = await Appointment.findById(id);
       if(appointment){
           appointment.vaccineName = vaccineName;
           appointment.doseNo = doseNo;
+          appointment.maxDose = maxDose;
+          appointment.nextDose = nextDose;
 
           const existingAppointment = await Appointment.findOne({
             user: userId,
@@ -220,4 +230,53 @@ const fetchVaccinations = async (req, res) => {
   }
 }
 
-module.exports = { bookAppointment, fetchAppointments, editAppointment, deleteAppointment, fetchVaccinations };
+// @route GET /api/patients/fetch/vaccination/info/:id
+// @desc This route is used to fetch all the vaccination details using vaccination id. 
+// @payload ( "vaccinationId" )
+// @response  ( vaccination details, message )
+// @access Private
+const fetchVaccinationInfo = async (req, res) => {
+  try {
+    const vaccinationId = req.params.id;
+
+    // Fetch the vaccination details for the given user id.
+    const vaccination = await Vaccinate.findOne({ _id : vaccinationId });
+
+    if (!vaccination) {
+      res.status(404).json({
+        message:"Vaccinations with this ID is not found!",
+      })
+    }
+    
+    if(vaccination){
+      const doctor = await User.findOne({ _id : vaccination.doctorId });
+      if(doctor){
+        res.status(200).json({
+          doctorName : doctor.name,
+          doseNo : vaccination.doseNo,
+          pincode : vaccination.pincode,
+          doctorAadhaar : doctor.aadhaar,
+          nextDose : vaccination.nextDose,
+          vaccinatedOn : vaccination.createdAt,
+          vaccineName : vaccination.vaccineName,
+          hospitalName : vaccination.hospitalName,
+          fullyVaccinated : vaccination.fullyVaccinated,
+          remainingNoOfDose : vaccination.remainingNoOfDose,
+        })
+      }
+
+      if(!doctor){
+        res.status(404).json({
+          message:"Error while fetching vaccination details!",
+        })
+      }
+    }
+  } catch (error) {
+    console.log(`Error while fetching vaccination details: ${error}`);
+    return res.status(500).json({
+      message: "There was some problem processing the request. Please try again later.",
+    });
+  }
+}
+
+module.exports = { bookAppointment, fetchAppointments, editAppointment, deleteAppointment, fetchVaccinations, fetchVaccinationInfo };
