@@ -180,12 +180,15 @@ const fetchAppointmentByAadhaar = async (req, res) => {
             });
         }
 
-        // Fetching appointments for the user
-        const appointments = await Appointment.find({ user: userDetails._id });
+        // Fetching active appointments for the user
+        const activeAppointments = await Appointment.find({
+            user: userDetails._id,
+            status: "active", // Filter appointments with status "active"
+        });
 
-        if (!appointments || appointments.length === 0) {
+        if (!activeAppointments || activeAppointments.length === 0) {
             return res.status(404).json({
-                message: "No appointments found for the provided Aadhaar number.",
+                message: "No active appointments found for the provided Aadhaar number.",
             });
         }
 
@@ -198,25 +201,24 @@ const fetchAppointmentByAadhaar = async (req, res) => {
                 gender: userDetails.gender,
                 aadhaar: userDetails.aadhaar
             },
-            appointment: appointments.map((appointment) => ({
+            appointment: activeAppointments.map((appointment) => ({
                 doseNo: appointment.doseNo,
-                status : appointment.status,
+                status: appointment.status,
                 maxDose: appointment.maxDose,
                 appointmentId: appointment._id,
-                nextDose : appointment.nextDose,
+                nextDose: appointment.nextDose,
                 vaccineName: appointment.vaccineName,
             })),
         };
 
         return res.status(200).json(response);
     } catch (error) {
-        console.error(`Error while fetching appointments using user details: ${error}`);
+        console.error(`Error while fetching active appointments using user details: ${error}`);
         return res.status(500).json({
             message: "There was some problem processing the request. Please try again later.",
         });
     }
 };
-
 
 // @route GET /api/doctors/fetch/appointment/:bookingId
 // @desc This route is used to fetch the appointment using booking id and return user detail along with appointment detail.
