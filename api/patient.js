@@ -336,7 +336,7 @@ const fetchPdf = async (req, res) => {
       pdf.create(htmlTemplate, pdfOptions).toBuffer((err, buffer) => {
         if (err) {
           console.error(`Error generating PDF: ${err}`);
-          return res.status(500).send('Error generating PDF');
+          return res.status(500).send('Error generating PDF', err);
         }
 
         const fileName = `${data.vaccineName}_0${data.doseNo}.pdf`;
