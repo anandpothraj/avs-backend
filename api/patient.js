@@ -281,6 +281,70 @@ const fetchVaccinationInfo = async (req, res) => {
   }
 }
 
+const createCertificateData = async (vaccinationId) => {
+  // Fetch the vaccination details for the given vaccination id.
+  const vaccination = await Vaccinate.findOne({ _id: vaccinationId });
+  if (!vaccination) {
+    throw new Error("Vaccination with this ID is not found!");
+  }
+
+  const patient = await User.findOne({ _id: vaccination.patientId });
+  const doctor = await User.findOne({ _id: vaccination.doctorId });
+
+  if (!patient || !doctor) {
+    throw new Error("Error while fetching vaccination details!");
+  }
+
+  return {
+    patientName: patient.name,
+    patientAge: patient.age,
+    patientGender: patient.gender,
+    patientUserId: patient._id,
+    patientAadhaar: patient.aadhaar,
+    patientEmail: patient.email,
+    patientPhone: patient.phone,
+    vaccineName: vaccination.vaccineName,
+    doseNo: vaccination.doseNo,
+    vaccinatedOn: vaccination.createdAt,
+    doctorName: doctor.name,
+    doctorAadhaar: doctor.aadhaar,
+    hospitalName: vaccination.hospitalName,
+    pincode: vaccination.pincode,
+    fullyVaccinated: vaccination.fullyVaccinated,
+    nextDose: vaccination.nextDose || "",
+    remainingNoOfDose: vaccination.remainingNoOfDose || "",
+    certificateId: "1234567890",
+  };
+};
+
+const generatePDF = async (data) => {
+  return new Promise((resolve, reject) => {
+    const htmlTemplate = certificateTemplate(data);
+    const pdfOptions = { format: 'Letter' };
+
+    pdf.create(htmlTemplate, pdfOptions).toBuffer((err, buffer) => {
+      if (err) {
+        console.error(`Error generating PDF: ${err}`);
+        reject(err);
+      } else {
+        resolve(buffer);
+      }
+    });
+  });
+};
+
+const sendPDFResponse = (res, buffer, data) => {
+  const fileName = `${data.vaccineName}_0${data.doseNo}.pdf`;
+  res.status(200)
+    .header('Content-Type', 'application/pdf')
+    .header('Content-Disposition', `inline; filename=${fileName}`)
+    .send(buffer);
+};
+
+const sendErrorResponse = (res, message, status = 500) => {
+  res.status(status).json({ message });
+};
+
 // @route GET /api/patients/fetch/certificate/:id
 // @desc This route is used to create and fetch vaccination certificate using vaccination id. 
 // @payload ( "vaccinationId" )
@@ -289,69 +353,19 @@ const fetchVaccinationInfo = async (req, res) => {
 const fetchPdf = async (req, res) => {
   try {
     const vaccinationId = req.params.id;
-
-    // Fetch the vaccination details for the given vaccination id.
-    const vaccination = await Vaccinate.findOne({ _id: vaccinationId });
-
-    if (!vaccination) {
-      return res.status(404).json({
-        message: "Vaccination with this ID is not found!",
-      });
-    }
-
-    const patient = await User.findOne({ _id: vaccination.patientId });
-    const doctor = await User.findOne({ _id: vaccination.doctorId });
-
-    if (!patient || !doctor) {
-      return res.status(404).json({
-        message: "Error while fetching vaccination details!",
-      });
-    }
-
-    const data = {
-      patientName: patient.name,
-      patientAge: patient.age,
-      patientGender: patient.gender,
-      patientUserId: patient._id,
-      patientAadhaar: patient.aadhaar,
-      patientEmail: patient.email,
-      patientPhone: patient.phone,
-      vaccineName: vaccination.vaccineName,
-      doseNo: vaccination.doseNo,
-      vaccinatedOn: vaccination.createdAt,
-      doctorName: doctor.name,
-      doctorAadhaar: doctor.aadhaar,
-      hospitalName: vaccination.hospitalName,
-      pincode: vaccination.pincode,
-      fullyVaccinated: vaccination.fullyVaccinated,
-      nextDose: vaccination.nextDose || "",
-      remainingNoOfDose: vaccination.remainingNoOfDose || "",
-      certificateId: "1234567890",
-    };
-
-    if (data) {
-      const htmlTemplate = certificateTemplate(data);
-      const pdfOptions = { format: 'Letter' };
-
-      pdf.create(htmlTemplate, pdfOptions).toBuffer((err, buffer) => {
-        if (err) {
-          console.error(`Error generating PDF: ${err}`);
-          return res.status(500).send('Error generating PDF', err);
-        }
-
-        const fileName = `${data.vaccineName}_0${data.doseNo}.pdf`;
-        res.status(200)
-          .header('Content-Type', 'application/pdf')
-          .header('Content-Disposition', `inline; filename=${fileName}`)
-          .send(buffer);
-      });
-    }
+    const data = await createCertificateData(vaccinationId);
+    const buffer = await generatePDF(data);
+    sendPDFResponse(res, buffer, data);
   } catch (error) {
     console.error(`Error while generating vaccination certificate: ${error}`);
-    return res.status(500).json({
-      message: "There was some problem processing the request. Please try again later.",
-    });
+    sendErrorResponse(res, "There was some problem processing the request. Please try again later.");
   }
 };
+
+
+
+
+
+
 
 module.exports = { bookAppointment, fetchAppointments, editAppointment, deleteAppointment, fetchVaccinations, fetchVaccinationInfo, fetchPdf };
