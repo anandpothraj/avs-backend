@@ -1,3 +1,4 @@
+const stringToBoolean = require('../utils/stringToBoolean');
 const formatDateToString = require('../utils/formatDateToString');
 
 module.exports = (data) => {
@@ -119,9 +120,9 @@ module.exports = (data) => {
                                 <h3 class="text-center text-black">Vaccine Ensured, Life Secured!</h3>
                             </div>
                             <div>
-                                <h2 class="text-center text-primary font-weight-bold">${fullyVaccinated ? "Final " : ""}Certificate for ${vaccineName} Vaccination.</h2>
+                                <h2 class="text-center text-primary font-weight-bold">${stringToBoolean(fullyVaccinated) ? "Final " : ""}Certificate for ${vaccineName} Vaccination.</h2>
                                 <h3 class="text-center text-primary font-weight-bold my-3">issued by Ministry of health & family welfare.</h3>
-                                <h4 class="text-center font-weight-bold text-black my-3">Certificate ID : ${certificateId}</h4>
+                                <h4 class="text-center font-weight-bold text-black my-3">Certificate ID : ${parseInt(certificateId)}</h4>
                             </div>
                         </div>
                         <hr />
@@ -129,26 +130,26 @@ module.exports = (data) => {
                             <h4 class="my-3 text-primary text-decoration-underline">Patient Details</h4>
                             <div class="container text-black">
                                 <p class="my-3 font20">Patient Name : <span class="font-weight-bold">${patientName}</span></p>
-                                <p class="my-3 font20">Age : <span class="font-weight-bold">${patientAge}</span></p>
+                                <p class="my-3 font20">Age : <span class="font-weight-bold">${parseInt(patientAge)}</span></p>
                                 <p class="my-3 font20">Gender : <span class="font-weight-bold">${patientGender}</span></p>
                                 <p class="my-3 font20">User Id : <span class="font-weight-bold">${patientUserId}</span></p>
-                                <p class="my-3 font20">Patient Aadhaar : <span class="font-weight-bold">${patientAadhaar}</span></p>
+                                <p class="my-3 font20">Patient Aadhaar : <span class="font-weight-bold">${parseInt(patientAadhaar)}</span></p>
                                 <p class="my-3 font20">Patient email : <span class="font-weight-bold">${patientEmail}</span></p>
-                                <p class="my-3 font20">Patient phone : <span class="font-weight-bold">${patientPhone}</span></p>
+                                <p class="my-3 font20">Patient phone : <span class="font-weight-bold">${parseInt(patientPhone)}</span></p>
                             </div>
                             <hr />
                             <h4 class="my-3 text-primary text-decoration-underline">Vaccination Details</h4>
                             <div class="container text-black">
                                 <p class="my-3 font20">Vaccine Name : <span class="font-weight-bold">${vaccineName}</span></p>
-                                <p class="my-3 font20">Dose Number : <span class="font-weight-bold">${doseNo}/${doseNo + remainingNoOfDose}</span></p>
+                                <p class="my-3 font20">Dose Number : <span class="font-weight-bold">${parseInt(doseNo)}/${parseInt(doseNo) + parseInt(remainingNoOfDose)}</span></p>
                                 <p class="my-3 font20">Vaccinated On : <span class="font-weight-bold">${formatDateToString(vaccinatedOn)}</span></p>
-                                <p class="my-3 font20">Vaccinated By : <span class="font-weight-bold"> Dr.${doctorName} / ${doctorAadhaar}</span></p>
-                                <p class="my-3 font20">Vaccinated At : <span class="font-weight-bold">${hospitalName} / ${pincode}</span></p>
+                                <p class="my-3 font20">Vaccinated By : <span class="font-weight-bold"> Dr.${doctorName} / ${parseInt(doctorAadhaar)}</span></p>
+                                <p class="my-3 font20">Vaccinated At : <span class="font-weight-bold">${hospitalName} / ${parseInt(pincode)}</span></p>
                                 ${
-                                    fullyVaccinated ?
+                                    stringToBoolean(fullyVaccinated) ?
                                     `<p class="my-3 font20"> Vaccinated Status : <span class="badge bg-success rounded text-white font18">Fully Vaccinated</span></p>` : 
                                     `<p class="my-3 font20"> Vaccinated Status : <span class="badge bg-danger rounded text-white font18">Partially Vaccinated</span></p>
-                                    <p class="my-3 font20">Remaining Dose Number : <span class="font-weight-bold">${remainingNoOfDose}</span></p>
+                                    <p class="my-3 font20">Remaining Dose Number : <span class="font-weight-bold">${parseInt(remainingNoOfDose)}</span></p>
                                     <p class="my-3 font20">Next Dose after : <span class="font-weight-bold">after ${nextDose}</span></p>`
                                 }
                             </div>
