@@ -1,4 +1,4 @@
-const pdf = require('html-pdf');
+const pdf = require('html-pdf-node');
 const User = require('../models/userModel');
 const Vaccinate = require('../models/vaccinateModal');
 const certificateTemplate = require('../document/index');
@@ -281,20 +281,25 @@ const fetchVaccinationInfo = async (req, res) => {
   }
 };
 
+// Define the sendErrorResponse function
+function sendErrorResponse(res, message) {
+  res.status(500).json({ error: message });
+}
+
 // This function is used to generate pdf from html template
 function generatePdf(query) {
-  return new Promise((resolve, reject) => {
-    const htmlTemplate = certificateTemplate(query);
-    const pdfOptions = { format: "Letter" };
+  return new Promise(async (resolve, reject) => {
+    try {
+      const htmlTemplate = certificateTemplate(query);
+      const pdfOptions = { format: 'Letter' };
+      let file = { content: htmlTemplate };
 
-    pdf.create(htmlTemplate, pdfOptions).toBuffer((err, buffer) => {
-      if (err) {
-        console.error(`Error generating PDF: ${err}`);
-        reject(err);
-      } else {
-        resolve(buffer);
-      }
-    });
+      const pdfBuffer = await pdf.generatePdf(file, pdfOptions);
+      resolve(pdfBuffer);
+    } catch (err) {
+      console.error(`Error generating PDF: ${err}`);
+      reject(err);
+    }
   });
 }
 
@@ -314,15 +319,15 @@ const fetchPdf = async (req, res) => {
 
       res
         .status(200)
-        .header("Content-Type", "application/pdf")
-        .header("Content-Disposition", `inline; filename=${fileName}`)
+        .header('Content-Type', 'application/pdf')
+        .header('Content-Disposition', `inline; filename="${fileName}"`)
         .send(buffer);
     }
   } catch (error) {
     console.error(`Error while generating vaccination certificate: ${error}`);
     sendErrorResponse(
       res,
-      "There was some problem processing the request. Please try again later."
+      'There was some problem processing the request. Please try again later.'
     );
   }
 };
