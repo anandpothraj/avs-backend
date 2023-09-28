@@ -1,5 +1,6 @@
 module.exports = (inputDate) => {
   const inputDateObject = new Date(inputDate);
+
   const options = {
     weekday: 'short',
     month: 'short',
@@ -8,6 +9,10 @@ module.exports = (inputDate) => {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    timeZoneName: 'short',
   };
-  return inputDateObject.toLocaleString('en-US', options);
+
+  const formattedDate = inputDateObject.toLocaleString('en-US', options);
+  const cleanedDate = formattedDate.replace(/ GMT[+-]\d{1,2}:\d{2}$/, '');
+  return cleanedDate;
 }
