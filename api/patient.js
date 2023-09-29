@@ -1,12 +1,22 @@
 const pdf = require('html-pdf-node');
+const nodemailer = require('nodemailer');
 const User = require('../models/userModel');
+const config = require('../config/default.json');
 const Vaccinate = require('../models/vaccinateModal');
 const certificateTemplate = require('../document/index');
 const Appointment = require('../models/appointmentModel');
 const { isFieldPresentInRequest } = require('../utils/helper');
 
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: config.nodemailer.username,
+    pass: config.nodemailer.password
+  },
+});
+
 // @route POST /api/patients/book/appointment
-// @desc This route is used to create a new appointment
+// @desc This route is used to create a new appointment and send the appointment details to the user via email
 // @payload ( "vaccineName", "doseNo", "userId" )
 // @response  ( appointment, message )
 // @access Private
@@ -46,23 +56,57 @@ const bookAppointment = async (req, res) => {
     }
 
     const newAppointment = new Appointment({
-        user: userId,
-        doseNo: doseNo,
-        status : "active",
-        maxDose : maxDose,
-        nextDose : nextDose,
-        vaccineName: vaccineName
+      user: userId,
+      doseNo: doseNo,
+      status : "active",
+      maxDose : maxDose,
+      nextDose : nextDose,
+      vaccineName: vaccineName
     });
 
     // Save the appointment to the database
     const appointment = await newAppointment.save();
 
     if (appointment) {
-      res.status(201).json({
-        appointment: appointment,
-        message: "Appointment booked successfully.",
-      });
-    } else {
+
+      const userDetails = await User.findOne({ _id : userId }); // Make sure User model exists
+
+      if (userDetails) {
+
+        var mailOptions = {
+          from: config.nodemailer.username, // Use environment variables for email addresses
+          to: userDetails.email,
+          subject: `Appointment for ${vaccineName} Dose no ${doseNo} is successfully booked!`,
+          text: `
+            Patient ${userDetails.name}, your appointment for ${vaccineName} Dose no ${doseNo} is successfully booked. Please vaccinate yourself by visiting your nearest hospital.
+            Please carry your aadhaar details with you. Your Appointment Number is ${appointment._id}, and note that if you don't vaccinate within 48 hours, the appointment will automatically expire. Thank you!
+          `,
+        };
+
+        transporter.sendMail(mailOptions, function (error, info) {
+          if (error) {
+            console.log("There was a problem while sending the message: ", error);
+            return res.status(201).json({
+              error : error,
+              message: `Appointment booked successfully but unable to send booking details to patient!`,
+            });
+          } 
+          else {
+            res.status(201).json({
+              appointment: appointment,
+              message: "Appointment booked successfully.",
+            });
+          }
+        });
+      } 
+      else {
+        res.status(201).json({
+          appointment: appointment,
+          message: "Appointment booked successfully but unable to send booking details to patient!",
+        });
+      }
+    } 
+    else {
       res.status(400).json({
         message: "Error Occurred During Booking New Appointment",
       });
