@@ -1,3 +1,4 @@
+const stringToBoolean = require('../utils/stringToBoolean');
 const formatDateToString = require('../utils/formatDateToString');
 
 module.exports = (data) => {
@@ -47,22 +48,19 @@ module.exports = (data) => {
                     .d-inline{
                         display: inline-flex;
                     }
-                    .my-3 {
+                    .my-3{
                         margin-top: 0.75rem !important;
                         margin-bottom: 0.75rem !important;
                     }
-                    .py-5{
-                        padding-top: 3.125rem !important;
-                        padding-bottom: 3.125rem !important;
+                    .py-3{
+                        padding-top: 0.75rem !important;
+                        padding-bottom: 0.75rem !important;
                     }
                     .m-auto{
                         margin: auto;
                     }
                     .text-center{
                         text-align: center !important;
-                    } 
-                    .text-white{
-                        color: white !important;
                     }
                     .text-primary{
                         color: rgb(0,123,255) !important;
@@ -72,6 +70,9 @@ module.exports = (data) => {
                     }
                     .text-success{
                         color: green !important;
+                    }
+                    .text-danger{
+                        color: red !important;
                     }
                     .font-weight-bold{
                         font-weight: bold !important;
@@ -89,29 +90,16 @@ module.exports = (data) => {
                     .col{
                         flex-direction: column !important;
                     }
-                    .bg-danger{
-                        background-color: red !important;
-                    }
-                    .bg-success{
-                        background-color: green !important;
-                    }
-                    .rounded{
-                        border-radius: 5px !important;
-                    }
-                    .badge{
-                        padding: 4px !important;
+                    span{
                         font-size: 12px !important;
                     }
-                    .font18{
-                        font-size: 18px !important;
-                    }
-                    .font20{
-                        font-size: 20px !important;
+                    p{
+                        font-size: 15px !important;
                     }
                 </style>
             </head>
             <body>
-                <div class="certificate bg-white w-75 mx-auto d-flex py-5">
+                <div class="certificate bg-white w-75 mx-auto d-flex py-3">
                     <div class="m-auto w-75">
                         <div class="certificateHeader">
                             <div>
@@ -119,44 +107,44 @@ module.exports = (data) => {
                                 <h3 class="text-center text-black">Vaccine Ensured, Life Secured!</h3>
                             </div>
                             <div>
-                                <h2 class="text-center text-primary font-weight-bold">${fullyVaccinated ? "Final " : ""}Certificate for ${vaccineName} Vaccination.</h2>
+                                <h2 class="text-center text-primary font-weight-bold">${stringToBoolean(fullyVaccinated) ? "Final " : ""}Certificate for ${vaccineName} Vaccination.</h2>
                                 <h3 class="text-center text-primary font-weight-bold my-3">issued by Ministry of health & family welfare.</h3>
-                                <h4 class="text-center font-weight-bold text-black my-3">Certificate ID : ${certificateId}</h4>
+                                <h4 class="text-center font-weight-bold text-black my-3">Certificate ID : ${parseInt(certificateId)}</h4>
                             </div>
                         </div>
                         <hr />
                         <div class="certificateBody">
                             <h4 class="my-3 text-primary text-decoration-underline">Patient Details</h4>
                             <div class="container text-black">
-                                <p class="my-3 font20">Patient Name : <span class="font-weight-bold">${patientName}</span></p>
-                                <p class="my-3 font20">Age : <span class="font-weight-bold">${patientAge}</span></p>
-                                <p class="my-3 font20">Gender : <span class="font-weight-bold">${patientGender}</span></p>
-                                <p class="my-3 font20">User Id : <span class="font-weight-bold">${patientUserId}</span></p>
-                                <p class="my-3 font20">Patient Aadhaar : <span class="font-weight-bold">${patientAadhaar}</span></p>
-                                <p class="my-3 font20">Patient email : <span class="font-weight-bold">${patientEmail}</span></p>
-                                <p class="my-3 font20">Patient phone : <span class="font-weight-bold">${patientPhone}</span></p>
+                                <p class="my-3">Patient Name : <span class="font-weight-bold">${patientName}</span></p>
+                                <p class="my-3">Age : <span class="font-weight-bold">${parseInt(patientAge)}</span></p>
+                                <p class="my-3">Gender : <span class="font-weight-bold">${patientGender}</span></p>
+                                <p class="my-3">User Id : <span class="font-weight-bold">${patientUserId}</span></p>
+                                <p class="my-3">Patient Aadhaar : <span class="font-weight-bold">${parseInt(patientAadhaar)}</span></p>
+                                <p class="my-3">Patient email : <span class="font-weight-bold">${patientEmail}</span></p>
+                                <p class="my-3">Patient phone : <span class="font-weight-bold">${parseInt(patientPhone)}</span></p>
                             </div>
                             <hr />
                             <h4 class="my-3 text-primary text-decoration-underline">Vaccination Details</h4>
                             <div class="container text-black">
-                                <p class="my-3 font20">Vaccine Name : <span class="font-weight-bold">${vaccineName}</span></p>
-                                <p class="my-3 font20">Dose Number : <span class="font-weight-bold">${doseNo}/${doseNo + remainingNoOfDose}</span></p>
-                                <p class="my-3 font20">Vaccinated On : <span class="font-weight-bold">${formatDateToString(vaccinatedOn)}</span></p>
-                                <p class="my-3 font20">Vaccinated By : <span class="font-weight-bold"> Dr.${doctorName} / ${doctorAadhaar}</span></p>
-                                <p class="my-3 font20">Vaccinated At : <span class="font-weight-bold">${hospitalName} / ${pincode}</span></p>
+                                <p class="my-3">Vaccine Name : <span class="font-weight-bold">${vaccineName}</span></p>
+                                <p class="my-3">Dose Number : <span class="font-weight-bold">${parseInt(doseNo)}/${parseInt(doseNo) + parseInt(remainingNoOfDose)}</span></p>
+                                <p class="my-3">Vaccinated On : <span class="font-weight-bold">${formatDateToString(vaccinatedOn)}</span></p>
+                                <p class="my-3">Vaccinated By : <span class="font-weight-bold"> Dr.${doctorName} / ${parseInt(doctorAadhaar)}</span></p>
+                                <p class="my-3">Vaccinated At : <span class="font-weight-bold">${hospitalName} / ${parseInt(pincode)}</span></p>
                                 ${
-                                    fullyVaccinated ?
-                                    `<p class="my-3 font20"> Vaccinated Status : <span class="badge bg-success rounded text-white font18">Fully Vaccinated</span></p>` : 
-                                    `<p class="my-3 font20"> Vaccinated Status : <span class="badge bg-danger rounded text-white font18">Partially Vaccinated</span></p>
-                                    <p class="my-3 font20">Remaining Dose Number : <span class="font-weight-bold">${remainingNoOfDose}</span></p>
-                                    <p class="my-3 font20">Next Dose after : <span class="font-weight-bold">after ${nextDose}</span></p>`
+                                    stringToBoolean(fullyVaccinated) ?
+                                    `<p class="my-3"> Vaccinated Status : <span class="text-success font-weight-bold">Fully Vaccinated</span></p>` : 
+                                    `<p class="my-3"> Vaccinated Status : <span class="text-danger font-weight-bold">Partially Vaccinated</span>
+                                    <p class="my-3">Remaining Dose Number : <span class="font-weight-bold">${parseInt(remainingNoOfDose)}</span></p>
+                                    <p class="my-3">Next Dose after : <span class="font-weight-bold">After ${nextDose}</span></p>`
                                 }
                             </div>
                             <hr />
                             <div class="container d-flex">
                                 <div class="w-75">
                                     <h1 class="text-success">AVS</h1>
-                                    <p class="text-black font20">Vaccine Ensured, Life Secured!</p>
+                                    <p class="text-black ">Vaccine Ensured, Life Secured!</p>
                                     <small class="text-black">
                                         visit <a target="_blank" class="text-primary" href="https://anand-vaccination-system.netlify.app/">@anand-vaccination-system</a> for more info.
                                     </small>
