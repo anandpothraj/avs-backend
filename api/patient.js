@@ -1,12 +1,22 @@
-const pdf = require('html-pdf');
+const pdf = require('html-pdf-node');
+const nodemailer = require('nodemailer');
 const User = require('../models/userModel');
+const config = require('../config/default.json');
 const Vaccinate = require('../models/vaccinateModal');
 const certificateTemplate = require('../document/index');
 const Appointment = require('../models/appointmentModel');
 const { isFieldPresentInRequest } = require('../utils/helper');
 
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: config.nodemailer.username,
+    pass: config.nodemailer.password
+  },
+});
+
 // @route POST /api/patients/book/appointment
-// @desc This route is used to create a new appointment
+// @desc This route is used to create a new appointment and send the appointment details to the user via email
 // @payload ( "vaccineName", "doseNo", "userId" )
 // @response  ( appointment, message )
 // @access Private
@@ -46,23 +56,57 @@ const bookAppointment = async (req, res) => {
     }
 
     const newAppointment = new Appointment({
-        user: userId,
-        doseNo: doseNo,
-        status : "active",
-        maxDose : maxDose,
-        nextDose : nextDose,
-        vaccineName: vaccineName
+      user: userId,
+      doseNo: doseNo,
+      status : "active",
+      maxDose : maxDose,
+      nextDose : nextDose,
+      vaccineName: vaccineName
     });
 
     // Save the appointment to the database
     const appointment = await newAppointment.save();
 
     if (appointment) {
-      res.status(201).json({
-        appointment: appointment,
-        message: "Appointment booked successfully.",
-      });
-    } else {
+
+      const userDetails = await User.findOne({ _id : userId }); // Make sure User model exists
+
+      if (userDetails) {
+
+        var mailOptions = {
+          from: config.nodemailer.username, // Use environment variables for email addresses
+          to: userDetails.email,
+          subject: `Appointment for ${vaccineName} Dose no ${doseNo} is successfully booked!`,
+          text: `
+            Patient ${userDetails.name}, your appointment for ${vaccineName} Dose no ${doseNo} is successfully booked. Please vaccinate yourself by visiting your nearest hospital.
+            Please carry your aadhaar details with you. Your Appointment Number is ${appointment._id}, and note that if you don't vaccinate within 48 hours, the appointment will automatically expire. Thank you!
+          `,
+        };
+
+        transporter.sendMail(mailOptions, function (error, info) {
+          if (error) {
+            console.log("There was a problem while sending the message: ", error);
+            return res.status(201).json({
+              error : error,
+              message: `Appointment booked successfully but unable to send booking details to patient!`,
+            });
+          } 
+          else {
+            res.status(201).json({
+              appointment: appointment,
+              message: "Appointment booked successfully.",
+            });
+          }
+        });
+      } 
+      else {
+        res.status(201).json({
+          appointment: appointment,
+          message: "Appointment booked successfully but unable to send booking details to patient!",
+        });
+      }
+    } 
+    else {
       res.status(400).json({
         message: "Error Occurred During Booking New Appointment",
       });
@@ -242,7 +286,7 @@ const fetchVaccinationInfo = async (req, res) => {
     const vaccinationId = req.params.id;
 
     // Fetch the vaccination details for the given user id.
-    const vaccination = await Vaccinate.findOne({ _id : vaccinationId });
+    const vaccination = await Vaccinate.findOne({ _id: vaccinationId });
 
     if (!vaccination) {
       res.status(404).json({
@@ -254,17 +298,17 @@ const fetchVaccinationInfo = async (req, res) => {
       const doctor = await User.findOne({ _id : vaccination.doctorId });
       if(doctor){
         res.status(200).json({
-          doctorName : doctor.name,
-          doseNo : vaccination.doseNo,
-          pincode : vaccination.pincode,
-          doctorAadhaar : doctor.aadhaar,
-          nextDose : vaccination.nextDose,
-          vaccinatedOn : vaccination.createdAt,
-          vaccineName : vaccination.vaccineName,
-          hospitalName : vaccination.hospitalName,
-          fullyVaccinated : vaccination.fullyVaccinated,
-          remainingNoOfDose : vaccination.remainingNoOfDose,
-        })
+          doctorName: doctor.name,
+          doseNo: vaccination.doseNo,
+          pincode: vaccination.pincode,
+          doctorAadhaar: doctor.aadhaar,
+          nextDose: vaccination.nextDose,
+          vaccinatedOn: vaccination.createdAt,
+          vaccineName: vaccination.vaccineName,
+          hospitalName: vaccination.hospitalName,
+          fullyVaccinated: vaccination.fullyVaccinated,
+          remainingNoOfDose: vaccination.remainingNoOfDose,
+        });
       }
 
       if(!doctor){
@@ -279,78 +323,56 @@ const fetchVaccinationInfo = async (req, res) => {
       message: "There was some problem processing the request. Please try again later.",
     });
   }
+};
+
+// Define the sendErrorResponse function
+function sendErrorResponse(res, message) {
+  res.status(500).json({ error: message });
 }
 
-// @route GET /api/patients/fetch/certificate/:id
-// @desc This route is used to create and fetch vaccination certificate using vaccination id. 
+// This function is used to generate pdf from html template
+function generatePdf(query) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const htmlTemplate = certificateTemplate(query);
+      const pdfOptions = { format: 'Letter' };
+      let file = { content: htmlTemplate };
+
+      const pdfBuffer = await pdf.generatePdf(file, pdfOptions);
+      resolve(pdfBuffer);
+    } catch (err) {
+      console.error(`Error generating PDF: ${err}`);
+      reject(err);
+    }
+  });
+}
+
+// @route GET /api/patients/fetch/certificate?{pdfDetails}
+// @desc This route is used to create vaccination certificate using query params.
 // @payload ( "vaccinationId" )
 // @response ( pdf, message )
 // @access Private
 const fetchPdf = async (req, res) => {
   try {
-    const vaccinationId = req.params.id;
+    const query = req.query;
 
-    // Fetch the vaccination details for the given vaccination id.
-    const vaccination = await Vaccinate.findOne({ _id: vaccinationId });
+    if (query) {
+      const buffer = await generatePdf(query);
 
-    if (!vaccination) {
-      return res.status(404).json({
-        message: "Vaccination with this ID is not found!",
-      });
-    }
+      const fileName = `${query.vaccineName}_0${query.doseNo}.pdf`;
 
-    const patient = await User.findOne({ _id: vaccination.patientId });
-    const doctor = await User.findOne({ _id: vaccination.doctorId });
-
-    if (!patient || !doctor) {
-      return res.status(404).json({
-        message: "Error while fetching vaccination details!",
-      });
-    }
-
-    const data = {
-      patientName: patient.name,
-      patientAge: patient.age,
-      patientGender: patient.gender,
-      patientUserId: patient._id,
-      patientAadhaar: patient.aadhaar,
-      patientEmail: patient.email,
-      patientPhone: patient.phone,
-      vaccineName: vaccination.vaccineName,
-      doseNo: vaccination.doseNo,
-      vaccinatedOn: vaccination.createdAt,
-      doctorName: doctor.name,
-      doctorAadhaar: doctor.aadhaar,
-      hospitalName: vaccination.hospitalName,
-      pincode: vaccination.pincode,
-      fullyVaccinated: vaccination.fullyVaccinated,
-      nextDose: vaccination.nextDose || "",
-      remainingNoOfDose: vaccination.remainingNoOfDose || "",
-      certificateId: "1234567890",
-    };
-
-    if (data) {
-      const htmlTemplate = certificateTemplate(data);
-      const pdfOptions = { format: 'Letter' };
-
-      pdf.create(htmlTemplate, pdfOptions).toBuffer((err, buffer) => {
-        if (err) {
-          console.error(`Error generating PDF: ${err}`);
-          return res.status(500).send('Error generating PDF');
-        }
-
-        const fileName = `${data.vaccineName}_0${data.doseNo}.pdf`;
-        res.status(200)
-          .header('Content-Type', 'application/pdf')
-          .header('Content-Disposition', `inline; filename=${fileName}`)
-          .send(buffer);
-      });
+      res
+        .status(200)
+        .header('Content-Type', 'application/pdf')
+        .header('Content-Disposition', `inline; filename="${fileName}"`)
+        .send(buffer);
     }
   } catch (error) {
     console.error(`Error while generating vaccination certificate: ${error}`);
-    return res.status(500).json({
-      message: "There was some problem processing the request. Please try again later.",
-    });
+    sendErrorResponse(
+      res,
+      'There was some problem processing the request. Please try again later.'
+    );
   }
 };
 
