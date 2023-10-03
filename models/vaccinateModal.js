@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 const vaccinateSchema = new mongoose.Schema(
     {
+        certificateId : {
+            type: Number,
+            unique: true,
+        },
         patientId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
@@ -50,6 +54,17 @@ const vaccinateSchema = new mongoose.Schema(
         timestamps: true,
     }
 );
+
+// Pre-save middleware to generate a unique 10-digit certificate ID
+vaccinateSchema.pre('save', function(next) {
+    if (this.isNew) {
+        // Generate a 10-digit random integer
+        const min = 1000000000;
+        const max = 9999999999;
+        this.certificateId = Math.floor(min + Math.random() * (max - min + 1));
+    }
+    next();
+});
 
 const Vaccinate = mongoose.model('Vaccinate', vaccinateSchema);
 module.exports = Vaccinate;
