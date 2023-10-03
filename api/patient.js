@@ -333,6 +333,7 @@ const fetchVaccinationInfo = async (req, res) => {
           vaccinatedOn: vaccination.createdAt,
           vaccineName: vaccination.vaccineName,
           hospitalName: vaccination.hospitalName,
+          certificateId : vaccination.certificateId,
           fullyVaccinated: vaccination.fullyVaccinated,
           remainingNoOfDose: vaccination.remainingNoOfDose,
         });
