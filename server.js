@@ -1,3 +1,4 @@
+const inspectorRoutes = require("./routes/inspectorRoutes");
 const patientRoutes = require("./routes/patientRoutes");
 const doctorRoutes = require("./routes/doctorRoutes");
 const userRoutes = require("./routes/userRoutes");
@@ -51,6 +52,7 @@ app.use(express.json());
 app.use("/api/users" , userRoutes);
 app.use("/api/doctors" , doctorRoutes);
 app.use("/api/patients" , patientRoutes);
+app.use("/api/inspectors" , inspectorRoutes);
 
 const port = config.get("PORT") || 6678;
 
