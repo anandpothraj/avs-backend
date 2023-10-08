@@ -23,10 +23,6 @@ const userSchema = mongoose.Schema(
         type: String,
         required: true,
     },
-    secretCode: {
-        type: Number,
-        required: true,
-    },
     phone: {
         type: Number,
         required: true,
