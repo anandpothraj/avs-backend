@@ -1,19 +1,11 @@
 const pdf = require('html-pdf-node');
-const nodemailer = require('nodemailer');
 const User = require('../models/userModel');
 const config = require('../config/default.json');
+const transporter = require('../utils/transporter');
 const Vaccinate = require('../models/vaccinateModal');
 const certificateTemplate = require('../document/index');
 const Appointment = require('../models/appointmentModel');
 const { isFieldPresentInRequest } = require('../utils/helper');
-
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: config.nodemailer.username,
-    pass: config.nodemailer.password
-  },
-});
 
 // @route POST /api/patients/book/appointment
 // @desc This route is used to create a new appointment and send the appointment details to the user via email
