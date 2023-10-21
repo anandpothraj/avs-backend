@@ -67,6 +67,87 @@ const checkUser = async (req, res) => {
     }
 }
 
+// @route GET /api/users/fetch/details/:aadhaar
+// @desc This route is used to fetch user details using aadhaar number
+// @payload ("aadhaar")
+// @response  (userdetails or message)
+// @access Public
+const getUserDetails = async (req, res) => {
+    try {
+        const aadhaar = req.params.aadhaar;
+        if(aadhaar){
+            const user = await User.findOne({ aadhaar });
+            if(user){
+                return res.status(200).json({user});
+            }
+            else{
+                return res.status(404).json({
+                    message : "Unable to fetch user details",
+                })
+            }
+        }
+    } 
+    catch (error) {
+        console.log(`Error while fetching user details: ${error}`);
+        return res.status(500).json({
+            message: "There was some problem processing the request. Please try again later.",
+        });
+    }
+}
+
+// @route PUT /api/users/edit/details
+// @desc This route is used to edit a user details
+// @payload ("aadhaar", "age", "dob", "email", "gender", "name", "phone")
+// @response (message)
+// @access Private
+const editUserDetails = async (req, res) => {
+    try {
+        let reqBody = req.body;
+        let requiredFields = ["aadhaar", "age", "dob", "email", "gender", "name", "phone"];
+        const invalidFields = requiredFields.filter((field) => !isFieldPresentInRequest(reqBody, field));
+        if (invalidFields.length > 0) {
+            return res.status(400).json({
+                message: `Error - Missing fields: ${invalidFields.join(", ")}`,
+            });
+        }
+
+        const { aadhaar, age, dob, email, gender, name, phone } = reqBody;
+
+        const user = await User.findOne({ aadhaar });
+        if(user){
+            user.age = age;
+            user.dob = dob;
+            user.email = email;
+            user.gender = gender;
+            user.name = name;
+            user.phone = phone;
+
+            const updatedUser = await user.save();
+            if(updatedUser){
+                res.status(200).json({
+                    message: "User details updated successfully!"
+                })
+            }
+            else{
+                res.status(400).json({
+                    message:"Error Occured While updating user details!",
+                })
+            }
+        }
+        else{
+            res.status(404).json({
+                message:"User not found!",
+            })
+        }
+    }
+    catch (error) {
+        console.log(`Error while updating user details: ${error}`);
+        return res.status(500).json({
+            message: "There was some problem processing the request. Please try again later.",
+        });
+    };
+};
+
 // @route POST /api/users/register/createuser
 // @desc This route is used to create a new user
 // @payload ("accountType", "aadhaar", "name", "email", "password", "phone", "age", "dob", "gender")
@@ -259,4 +340,4 @@ const authOtp = async (req, res) => {
     }
 }
 
-module.exports = { checkUser, createUser, authLoginCred, authOtp }; 
+module.exports = { checkUser, createUser, authLoginCred, authOtp, getUserDetails, editUserDetails }; 
