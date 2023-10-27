@@ -67,16 +67,17 @@ const checkUser = async (req, res) => {
     }
 }
 
-// @route GET /api/users/fetch/details/:aadhaar
+// @route GET /api/users/fetch/details/?aadhaar&accountType
 // @desc This route is used to fetch user details using aadhaar number
-// @payload ("aadhaar")
+// @payload ("aadhaar", "accountType")
 // @response  (userdetails or message)
 // @access Public
 const getUserDetails = async (req, res) => {
     try {
-        const aadhaar = req.params.aadhaar;
-        if(aadhaar){
-            const user = await User.findOne({ aadhaar });
+        const aadhaar = req.query.aadhaar;
+        const accountType = req.query.accountType;
+        if(aadhaar && accountType){
+            const user = await User.findOne({ aadhaar, accountType });
             if(user){
                 return res.status(200).json({user});
             }
@@ -103,7 +104,7 @@ const getUserDetails = async (req, res) => {
 const editUserDetails = async (req, res) => {
     try {
         let reqBody = req.body;
-        let requiredFields = ["aadhaar", "age", "dob", "email", "gender", "name", "phone"];
+        let requiredFields = ["aadhaar", "age", "dob", "email", "gender", "name", "phone", "accountType"];
         const invalidFields = requiredFields.filter((field) => !isFieldPresentInRequest(reqBody, field));
         if (invalidFields.length > 0) {
             return res.status(400).json({
@@ -111,9 +112,9 @@ const editUserDetails = async (req, res) => {
             });
         }
 
-        const { aadhaar, age, dob, email, gender, name, phone } = reqBody;
+        const { aadhaar, age, dob, email, gender, name, phone, accountType } = reqBody;
 
-        const user = await User.findOne({ aadhaar });
+        const user = await User.findOne({ aadhaar, accountType });
         if(user){
             user.age = age;
             user.dob = dob;
