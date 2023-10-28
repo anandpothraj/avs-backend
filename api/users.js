@@ -233,18 +233,18 @@ const authLoginCred = async (req, res) => {
 
         const { accountType, aadhaar, password, title } = reqBody;
 
-        const userExists = await User.findOne({ aadhaar, accountType });
+        const userExists = await User.findOne({ accountType, aadhaar });
         if (userExists) {
             if(userExists && (await userExists.matchPassword(password))){
                 // Check if an OTP already exists for the given Aadhaar number
-                const existingOtp = await OTP.findOne({ aadhaar });
+                const existingOtp = await OTP.findOne({ accountType, aadhaar });
                 if (existingOtp) {
                     // Delete the existing OTP
                     await existingOtp.deleteOne();
                 }
                 const email = userExists.email;
                 const otp = generateOtp();
-                const newOtp = await OTP.create({aadhaar, otp});
+                const newOtp = await OTP.create({ accountType, aadhaar, otp });
                 if (newOtp) {
                     // Send the OTP to the user's email
                     sendOtpToEmail(otp, email, title);
@@ -304,7 +304,7 @@ const authOtp = async (req, res) => {
 
         const user = await User.findOne({ aadhaar, accountType });
         if (user) {
-            const verified = await OTP.findOne({ aadhaar, otp })
+            const verified = await OTP.findOne({ accountType, aadhaar, otp })
             if(verified){
                 await verified.deleteOne();
                 res.status(200).json({
@@ -341,4 +341,137 @@ const authOtp = async (req, res) => {
     }
 }
 
-module.exports = { checkUser, createUser, authLoginCred, authOtp, getUserDetails, editUserDetails }; 
+// @route POST /api/users/forgot/password/step1
+// @desc This route is used to check first step forgot password action and send otp to user's email.
+// @payload ("accountType", "aadhaar", "email", "title")
+// @response  (message)
+// @access Public
+const forgotPasswordStep1 = async (req, res) => {
+    try {
+        let reqBody = req.body;
+        let requiredFields = ["accountType", "aadhaar", "email", "title"];
+        let invalidFields = [];
+
+        requiredFields.forEach((field) => {
+            if (!isFieldPresentInRequest(reqBody, field)) {
+                invalidFields.push(field);
+            }
+        });
+
+        if (invalidFields.length > 0) {
+            return res.status(400).json({
+                message: `Error - Missing fields: ${invalidFields.join(", ")}`,
+            });
+        }
+
+        const { accountType, aadhaar, email, title } = reqBody;
+
+        const userExists = await User.findOne({ aadhaar, accountType, email });
+        if (userExists) {
+                // Check if an OTP already exists for the given Aadhaar number
+                const existingOtp = await OTP.findOne({ accountType, aadhaar });
+                if (existingOtp) {
+                    // Delete the existing OTP
+                    await existingOtp.deleteOne();
+                }
+                const otp = generateOtp();
+                const newOtp = await OTP.create({ accountType, aadhaar, otp });
+                if (newOtp) {
+                    // Send the OTP to the user's email
+                    sendOtpToEmail(otp, email, title);
+
+                    // Return a success response
+                    return res.status(200).json({
+                      message: "OTP sent successfully!",
+                      email : email
+                    });
+                }
+        } 
+        else {
+            return res.status(409).json({
+                message: "User does not exist or invalid credentials!",
+            });
+        }
+    } 
+    catch (error) {
+        console.log(`Error while registering user: ${error}`);
+        return res.status(500).json({
+            message: "There was some problem processing the request. Please try again later.",
+        });
+    }
+}
+
+// @route POST /api/users/forgot/password/step2
+// @desc This route is used to check second step forgot password action and create new password and save.
+// @payload ("accountType", "aadhaar", "password", "otp")
+// @response  (message)
+// @access Public
+const forgotPasswordStep2 = async (req, res) => {
+    try {
+        let reqBody = req.body;
+        let requiredFields = ["accountType", "aadhaar", "password", "otp"];
+        let invalidFields = [];
+
+        requiredFields.forEach((field) => {
+            if (!isFieldPresentInRequest(reqBody, field)) {
+                invalidFields.push(field);
+            }
+        });
+
+        if (invalidFields.length > 0) {
+            return res.status(400).json({
+                message: `Error - Missing fields: ${invalidFields.join(", ")}`,
+            });
+        }
+
+        const { accountType, aadhaar, password, otp } = reqBody;
+
+        const user = await User.findOne({ aadhaar, accountType });
+        if (user) {
+            const verified = await OTP.findOne({ accountType, aadhaar, otp })
+            if(verified){
+                await verified.deleteOne();
+
+                const user = await User.findOne({ aadhaar, accountType });
+                if(user){
+                    user.password = password;
+                    const updatedUser = await user.save();
+                    if(updatedUser){
+                        res.status(200).json({
+                            message: "Password updated successfully!"
+                        })
+                    }
+                    else{
+                        res.status(400).json({
+                            message:"Error Occured While updating password!",
+                        })
+                    }
+                }
+                else{
+                    res.status(404).json({
+                        message:"User not found!",
+                    })
+                }
+            }
+            else{
+                res.status(400);
+                res.json({
+                    message:"Invalid OTP",
+                })
+            }
+        } 
+        else {
+            return res.status(409).json({
+                message: "User details doesnot matched!",
+            });
+        }
+    } 
+    catch (error) {
+        console.log(`Error while registering user: ${error}`);
+        return res.status(500).json({
+            message: "There was some problem processing the request. Please try again later.",
+        });
+    }
+}
+
+module.exports = { checkUser, createUser, authLoginCred, authOtp, getUserDetails, editUserDetails, forgotPasswordStep1, forgotPasswordStep2 }; 

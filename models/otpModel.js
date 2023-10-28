@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const otpSchema = new mongoose.Schema({
+  accountType : {
+    type: String, 
+    required : true,
+  },
   aadhaar: {
     type: Number,
     required: true,
